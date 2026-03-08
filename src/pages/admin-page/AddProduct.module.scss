@@ -1,0 +1,121 @@
+.wrapper {
+  width: min(680px, 92vw);
+  margin: 2rem auto;
+}
+
+.title {
+  margin: 0 0 1rem;
+}
+
+.form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.dropzone {
+  border: 2px dashed #94a3b8;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  text-align: center;
+  background: #f8fafc;
+}
+
+.dropzoneActive {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.fileInput {
+  display: none;
+}
+
+.dropTitle {
+  margin: 0;
+  font-weight: 700;
+}
+
+.dropHint {
+  margin: 0.4rem 0 0.75rem;
+  color: #475467;
+}
+
+.pickButton {
+  padding: 0.55rem 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+}
+
+.previewGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.6rem;
+}
+
+.previewCard {
+  border: 1px solid #d0d7de;
+  border-radius: 0.6rem;
+  padding: 0.4rem;
+  background: #fff;
+}
+
+.previewImage {
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 0.45rem;
+}
+
+.removeButton {
+  margin-top: 0.45rem;
+  width: 100%;
+  border: 0;
+  border-radius: 0.4rem;
+  padding: 0.35rem 0.45rem;
+  cursor: pointer;
+  background: #fee2e2;
+  color: #991b1b;
+  font: inherit;
+}
+
+.field {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #d0d7de;
+  border-radius: 0.5rem;
+  font: inherit;
+  background: #fff;
+}
+
+.field:focus {
+  outline: 2px solid #7aa2ff;
+  outline-offset: 1px;
+}
+
+.submitButton {
+  padding: 0.7rem 0.9rem;
+  border: 0;
+  border-radius: 0.5rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  background: #1f6feb;
+  color: #fff;
+}
+
+.submitButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.error {
+  margin-top: 0.75rem;
+  color: #b42318;
+}
+
+.success {
+  margin-top: 0.75rem;
+  color: #067647;
+}
