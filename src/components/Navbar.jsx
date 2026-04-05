@@ -17,6 +17,12 @@ function Navbar() {
           <NavLink to="/admin/add-product" className={linkClassName}>
             Add Product
           </NavLink>
+          <NavLink to="/register" className={linkClassName}>
+            Register
+          </NavLink>
+          <NavLink to="/login" className={linkClassName}>
+            Login
+          </NavLink>
         </nav>
       </div>
     </header>
