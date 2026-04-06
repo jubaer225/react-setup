@@ -9,6 +9,7 @@ import VeryfyEmail from "./pages/auth-page/VeryfyEmail";
 import ForgotPassword from "./pages/auth-page/ForgotPassword";
 import EmailConfirmation from "./pages/auth-page/EmailConfirmation";
 import ResetPassword from "./pages/auth-page/ResetPassword";
+import ResendEmailConfirmation from "./pages/auth-page/ResendEmailConfirmation";
 
 const router = createBrowserRouter([
   {
@@ -43,6 +44,10 @@ const router = createBrowserRouter([
       {
         path: "reset-password",
         element: <ResetPassword />,
+      },
+      {
+        path: "resend-verification-email",
+        element: <ResendEmailConfirmation />,
       },
     ],
   },

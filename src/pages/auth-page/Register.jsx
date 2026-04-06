@@ -87,12 +87,16 @@ function Register() {
       setImageFile(null);
       setImagePreview("");
 
-      navigate("/login", {
+      navigate("/resend-verification-email", {
         state: { message: "Registration successful! Please log in." },
         replace: true,
       });
     } catch (err) {
-      setError("Registration failed. Please try again.", err);
+      setError(
+        typeof err === "string"
+          ? err
+          : err?.message || "Registration failed. Please try again.",
+      );
     }
   };
 

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import api from "../../api/apiClient";
 
 const initialState = {
   products: [],
@@ -11,10 +11,7 @@ export const createProduct = createAsyncThunk(
   "product/createProduct",
   async (productData, thunkAPI) => {
     try {
-      const response = await axios.post(
-        "http://localhost:8080/admin/add-product",
-        productData,
-      );
+      const response = await api.post("/admin/add-product", productData);
       return response.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(

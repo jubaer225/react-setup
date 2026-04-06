@@ -1,14 +1,44 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import axios from "axios";
+import api from "../../api/apiClient";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+const AUTH_USER_STORAGE_KEY = "authUser";
+const ACCESS_TOKEN_STORAGE_KEY = "accessToken";
+
+const getStoredUser = () => {
+  const rawUser = localStorage.getItem(AUTH_USER_STORAGE_KEY);
+
+  if (!rawUser) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawUser);
+  } catch {
+    localStorage.removeItem(AUTH_USER_STORAGE_KEY);
+    return null;
+  }
+};
+
+const persistAuthState = ({ user, accessToken }) => {
+  if (user) {
+    localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
+  } else {
+    localStorage.removeItem(AUTH_USER_STORAGE_KEY);
+  }
+
+  if (accessToken) {
+    localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, accessToken);
+  } else {
+    localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+  }
+};
 
 const initialState = {
-  user: null,
+  user: getStoredUser(),
   loading: false,
   error: null,
   verificationToken: null,
+  accessToken: localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY) || null,
   registerStatus: "idle",
   loginStatus: "idle",
   verifyStatus: "idle",
@@ -24,14 +54,46 @@ const registerUser = createAsyncThunk(
   "register/registerUser",
   async (userData, thunkAPI) => {
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/auth/signup`,
-        userData,
-      );
+      const hasImage = userData?.image instanceof File;
+
+      if (hasImage) {
+        const formData = new FormData();
+        formData.append("name", userData.name || "");
+        formData.append("email", userData.email || "");
+        formData.append("password", userData.password || "");
+
+        if (userData.phone) {
+          formData.append("phone", userData.phone);
+        }
+
+        formData.append("image", userData.image);
+
+        const response = await api.post("/auth/signup", formData, {
+          withCredentials: false,
+        });
+        return response.data;
+      }
+
+      const response = await api.post("/auth/signup", userData, {
+        withCredentials: false,
+      });
       return response.data;
     } catch (error) {
+      const backendError =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.response?.data?.errors?.[0]?.msg;
+
+      const networkError =
+        error.code === "ERR_NETWORK"
+          ? "Cannot reach server. Check API URL, backend status, and CORS."
+          : null;
+
       return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Failed to register user",
+        backendError ||
+          networkError ||
+          error.message ||
+          "Failed to register user",
       );
     }
   },
@@ -41,10 +103,7 @@ const forgotPassword = createAsyncThunk(
   "register/forgotPassowrd",
   async (email, thunkAPI) => {
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/auth/forgot-password`,
-        { email },
-      );
+      const response = await api.post("/auth/forgot-password", { email });
       return response.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(
@@ -58,8 +117,8 @@ const verifyEmail = createAsyncThunk(
   "register/verifyEmail",
   async (token, thunkAPI) => {
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/auth/verify-email/${encodeURIComponent(token)}`,
+      const response = await api.post(
+        `/auth/verify-email/${encodeURIComponent(token)}`,
       );
       return response.data;
     } catch (error) {
@@ -100,7 +159,7 @@ const loginUser = createAsyncThunk(
   "register/loginUser",
   async (userData, thunkAPI) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/login`, userData);
+      const response = await api.post("/auth/login", userData);
       return response.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(
@@ -114,8 +173,8 @@ const resetPassword = createAsyncThunk(
   "register/resetPassword",
   async ({ token, password, confirmpassword }, thunkAPI) => {
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/auth/reset-password/${encodeURIComponent(token)}`,
+      const response = await api.post(
+        `/auth/reset-password/${encodeURIComponent(token)}`,
         { password, confirmpassword },
       );
       return response.data;
@@ -127,10 +186,67 @@ const resetPassword = createAsyncThunk(
   },
 );
 
+const resendVerificationEmail = createAsyncThunk(
+  "register/resendVerificationEmail",
+  async (email, thunkAPI) => {
+    try {
+      const response = await api.post("/auth/resend-verification-email", {
+        email,
+      });
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to resend verification email",
+      );
+    }
+  },
+);
+
+const refreshToken = createAsyncThunk(
+  "register/refreshToken",
+  async (_, thunkAPI) => {
+    try {
+      const response = await api.post("/auth/refreshtoken");
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to refresh token",
+      );
+    }
+  },
+);
+
+const logoutUser = createAsyncThunk(
+  "register/logoutUser",
+  async (_, thunkAPI) => {
+    try {
+      const response = await api.post("/auth/logout");
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to logout user",
+      );
+    }
+  },
+);
+
+const clearAuthState = (state) => {
+  state.user = null;
+  state.accessToken = null;
+  state.loginStatus = "idle";
+  state.loginError = null;
+  state.error = null;
+  persistAuthState({ user: null, accessToken: null });
+};
+
 const registerSlice = createSlice({
   name: "register",
   initialState,
-  reducers: {},
+  reducers: {
+    logoutLocal: (state) => {
+      clearAuthState(state);
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(registerUser.pending, (state) => {
@@ -161,9 +277,12 @@ const registerSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload;
-        state.verificationToken = action.payload.token;
-        localStorage.setItem("token", action.payload.token);
+        state.user = action.payload.user;
+        state.accessToken = action.payload.accessToken;
+        persistAuthState({
+          user: action.payload.user,
+          accessToken: action.payload.accessToken,
+        });
         state.error = null;
         state.loginStatus = "succeeded";
         state.loginError = null;
@@ -173,6 +292,18 @@ const registerSlice = createSlice({
         state.error = action.payload || action.error.message;
         state.loginStatus = "failed";
         state.loginError = action.payload || action.error.message;
+      })
+      .addCase(logoutUser.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.loading = false;
+        clearAuthState(state);
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
+        state.loading = false;
+        clearAuthState(state);
+        state.error = action.payload || action.error.message;
       })
       .addCase(verifyEmail.pending, (state, action) => {
         state.loading = true;
@@ -227,9 +358,51 @@ const registerSlice = createSlice({
       .addCase(resetPassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || action.error.message;
+      })
+      .addCase(resendVerificationEmail.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resendVerificationEmail.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+        state.verifyMessage =
+          action.payload?.message || "Verification email has been resent.";
+      })
+      .addCase(resendVerificationEmail.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || action.error.message;
+      })
+      .addCase(refreshToken.fulfilled, (state, action) => {
+        const refreshedUser = action.payload.user || state.user;
+        state.accessToken = action.payload.accessToken;
+        state.user = refreshedUser;
+        persistAuthState({
+          user: refreshedUser,
+          accessToken: action.payload.accessToken,
+        });
+      })
+      .addCase(refreshToken.rejected, (state) => {
+        state.loading = false;
       });
   },
 });
 
-export { registerUser, loginUser, forgotPassword, resetPassword, verifyEmail };
+const { logoutLocal } = registerSlice.actions;
+
+const selectIsAuthenticated = (state) =>
+  Boolean(state.register.accessToken || state.register.user);
+
+export {
+  registerUser,
+  loginUser,
+  refreshToken,
+  logoutUser,
+  logoutLocal,
+  forgotPassword,
+  resendVerificationEmail,
+  resetPassword,
+  verifyEmail,
+  selectIsAuthenticated,
+};
 export default registerSlice.reducer;
