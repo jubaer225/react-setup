@@ -1,0 +1,34 @@
+.SectionProducts {
+  padding: 1rem;
+  color: black;
+}
+
+.cardContainer {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.productCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: #fff;
+}
+
+.productImage {
+  width: 100%;
+  aspect-ratio: 16 / 12;
+  background: #f3f4f6;
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.productInfo {
+  padding: 1rem;
+}

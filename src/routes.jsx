@@ -10,6 +10,7 @@ import ForgotPassword from "./pages/auth-page/ForgotPassword";
 import EmailConfirmation from "./pages/auth-page/EmailConfirmation";
 import ResetPassword from "./pages/auth-page/ResetPassword";
 import ResendEmailConfirmation from "./pages/auth-page/ResendEmailConfirmation";
+import Products from "./pages/shop-page/Products";
 
 const router = createBrowserRouter([
   {
@@ -48,6 +49,10 @@ const router = createBrowserRouter([
       {
         path: "resend-verification-email",
         element: <ResendEmailConfirmation />,
+      },
+      {
+        path: "products",
+        element: <Products />,
       },
     ],
   },

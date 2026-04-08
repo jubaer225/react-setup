@@ -1,15 +1,11 @@
 import { NavLink } from "react-router-dom";
 import styles from "./Navbar.module.scss";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  logoutUser,
-  selectIsAuthenticated,
-} from "../features/auth/register-slice";
+import { logoutUser } from "../features/auth/register-slice";
 import { useNavigate } from "react-router-dom";
 
 function Navbar() {
   const user = useSelector((state) => state.register.user);
-  const isAuthenticated = useSelector(selectIsAuthenticated);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const linkClassName = ({ isActive }) =>
@@ -42,7 +38,11 @@ function Navbar() {
             Home
           </NavLink>
 
-          {!isAuthenticated && (
+          <NavLink to="/products" className={linkClassName}>
+            Products
+          </NavLink>
+
+          {!user && (
             <>
               <NavLink to="/login" className={linkClassName}>
                 Login
@@ -50,7 +50,7 @@ function Navbar() {
             </>
           )}
 
-          {isAuthenticated && (
+          {user && (
             <NavLink
               to="/login"
               className={linkClassName}
