@@ -3,6 +3,22 @@
   color: black;
 }
 
+.filterBar {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.filterInput {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.95rem;
+  background: #fff;
+}
+
 .cardContainer {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -31,4 +47,24 @@
 
 .productInfo {
   padding: 1rem;
+}
+
+@media (max-width: 1100px) {
+  .filterBar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cardContainer {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .filterBar {
+    grid-template-columns: 1fr;
+  }
+
+  .cardContainer {
+    grid-template-columns: 1fr;
+  }
 }

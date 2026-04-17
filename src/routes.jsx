@@ -11,6 +11,7 @@ import EmailConfirmation from "./pages/auth-page/EmailConfirmation";
 import ResetPassword from "./pages/auth-page/ResetPassword";
 import ResendEmailConfirmation from "./pages/auth-page/ResendEmailConfirmation";
 import Products from "./pages/shop-page/Products";
+import Product from "./pages/shop-page/Product";
 
 const router = createBrowserRouter([
   {
@@ -53,6 +54,10 @@ const router = createBrowserRouter([
       {
         path: "products",
         element: <Products />,
+      },
+      {
+        path: "products/:id",
+        element: <Product />,
       },
     ],
   },

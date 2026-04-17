@@ -25,16 +25,19 @@ export const createProduct = createAsyncThunk(
 
 export const fetchProducts = createAsyncThunk(
   "product/fetchProducts",
-  async (_, thunkAPI) => {
+  async ({ cursor = null, filters = {} }, thunkAPI) => {
     try {
-      const cursor = thunkAPI.getState().product.cursor;
       const response = await api.get("/shop/products", {
         params: {
-          cursor,
           limit: 20,
+          cursor,
+          ...filters,
         },
       });
-      return response.data;
+
+      return {
+        ...response.data,
+      };
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || "Failed to fetch products",
@@ -42,9 +45,18 @@ export const fetchProducts = createAsyncThunk(
     }
   },
   {
-    condition: (_, { getState }) => {
+    condition: ({ cursor = null } = {}, { getState }) => {
       const { loading, hasMore } = getState().product;
-      return !loading && hasMore;
+
+      if (loading) {
+        return false;
+      }
+
+      if (cursor && !hasMore) {
+        return false;
+      }
+
+      return true;
     },
   },
 );
@@ -74,10 +86,17 @@ const productSlice = createSlice({
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.products = [...state.products, ...action.payload.data];
 
-        state.cursor = action.payload.nextCursor;
-        state.hasMore = action.payload.hasMore;
+        const { data, nextCursor, hasMore } = action.payload;
+
+        if (!action.meta.arg.cursor) {
+          state.products = data;
+        } else {
+          state.products = [...state.products, ...data];
+        }
+
+        state.cursor = nextCursor;
+        state.hasMore = hasMore;
         state.error = null;
       })
       .addCase(fetchProducts.rejected, (state, action) => {
