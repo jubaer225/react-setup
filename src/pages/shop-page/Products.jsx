@@ -3,17 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { fetchProducts } from "../../features/product/product-slice";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import style from "./Products.module.scss";
-
-const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-
-function buildProductImageUrl(publicId) {
-  if (!cloudName || !publicId) return "";
-  const safePublicId = publicId
-    .split("/")
-    .map((segment) => encodeURIComponent(segment))
-    .join("/");
-  return `https://res.cloudinary.com/${cloudName}/image/upload/f_webp,q_auto,w_320,c_fill/${safePublicId}`;
-}
+import { buildProductImageUrl } from "../../utils/imageUtils";
 
 function Products() {
   const loaderRef = useRef(null);
@@ -153,7 +143,7 @@ function Products() {
 
   const handleProductClick = (productId) => {
     navigate(`/products/${productId}`);
-  }
+  };
 
   return (
     <section className={style.SectionProducts}>
@@ -222,12 +212,13 @@ function Products() {
         {products.map((product) => (
           <div className={style.productCard} key={product._id}>
             <div className={style.productImage}>
-              {product.imagePublicId ? (
+              {product.images && product.images.length > 0 ? (
                 <img
-                  src={buildProductImageUrl(product.imagePublicId)}
+                  src={buildProductImageUrl(product.images[0])}
                   alt={product.title}
                   width="320"
                   height="280"
+                  loading="lazy"
                 />
               ) : null}
             </div>

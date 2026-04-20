@@ -4,9 +4,15 @@ import api from "../../api/apiClient";
 const initialState = {
   products: [],
   loading: false,
+  singleProduct: null,
   error: null,
   cursor: null,
   hasMore: true,
+  similarProducts: {
+    items: [],
+    loading: false,
+    error: null,
+  },
 };
 
 export const createProduct = createAsyncThunk(
@@ -61,6 +67,58 @@ export const fetchProducts = createAsyncThunk(
   },
 );
 
+export const featchProductById = createAsyncThunk(
+  "product/featchProductById",
+  async (id, thunkAPI) => {
+    try {
+      const response = await api.get(`/shop/products/${id}`);
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to featch product details",
+      );
+    }
+  },
+);
+
+export const fetchSimilarProducts = createAsyncThunk(
+  "product/fetchSimilarProducts",
+  async (category, thunkAPI) => {
+    if (!category) {
+      return [];
+    }
+
+    try {
+      const response = await api.get("/shop/products", {
+        params: {
+          category,
+          limit: 10,
+        },
+      });
+
+      const payload = response.data;
+
+      if (Array.isArray(payload)) {
+        return payload;
+      }
+
+      if (Array.isArray(payload?.data)) {
+        return payload.data;
+      }
+
+      if (Array.isArray(payload?.items)) {
+        return payload.items;
+      }
+
+      return [];
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to fetch similar products",
+      );
+    }
+  },
+);
+
 const productSlice = createSlice({
   name: "product",
   initialState,
@@ -102,6 +160,33 @@ const productSlice = createSlice({
       .addCase(fetchProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || action.error.message;
+      })
+      .addCase(featchProductById.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(featchProductById.fulfilled, (state, action) => {
+        state.loading = false;
+        state.singleProduct = action.payload.data;
+        state.error = null;
+      })
+      .addCase(featchProductById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || action.error.message;
+      })
+      .addCase(fetchSimilarProducts.pending, (state) => {
+        state.similarProducts.loading = true;
+        state.similarProducts.error = null;
+      })
+      .addCase(fetchSimilarProducts.fulfilled, (state, action) => {
+        state.similarProducts.loading = false;
+        state.similarProducts.items = action.payload;
+        state.similarProducts.error = null;
+      })
+      .addCase(fetchSimilarProducts.rejected, (state, action) => {
+        state.similarProducts.loading = false;
+        state.similarProducts.error = action.payload || action.error.message;
+        state.similarProducts.items = [];
       });
   },
 });
