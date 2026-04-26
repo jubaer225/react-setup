@@ -5,6 +5,16 @@ import store from "./store.js";
 import "./index.css";
 import App from "./App.jsx";
 
+const normalizedPathname = window.location.pathname.replace(/\/{2,}/g, "/");
+
+if (normalizedPathname !== window.location.pathname) {
+  window.history.replaceState(
+    window.history.state,
+    "",
+    `${normalizedPathname}${window.location.search}${window.location.hash}`,
+  );
+}
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Provider store={store}>

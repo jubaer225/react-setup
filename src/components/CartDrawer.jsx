@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   closeCart,
@@ -15,6 +15,7 @@ function CartDrawer() {
   const dispatch = useDispatch();
   const location = useLocation();
   const lastPathRef = useRef(location.pathname);
+  const navigate = useNavigate();
 
   const items = useSelector((state) => state.cart.items);
   const loading = useSelector((state) => state.cart.loading);
@@ -66,6 +67,11 @@ function CartDrawer() {
   const handleRemoveClick = (productId) => {
     dispatch(removeFromCart(productId));
     dispatch(removeFromCartBackend({ productId, prevItems: items }));
+  };
+
+  const handleCheckout = () => {
+    dispatch(closeCart());
+    navigate("/checkout");
   };
 
   const drawerRootClass = `${styles.drawerRoot} ${isOpen ? styles.open : ""}`;
@@ -200,7 +206,7 @@ function CartDrawer() {
               <span className={styles.totalValue}>${total.toFixed(2)}</span>
             </div>
 
-            <button type="button" className={styles.actionBtn}>
+            <button type="button" className={styles.actionBtn} onClick={handleCheckout}>
               Checkout
             </button>
 
