@@ -14,6 +14,8 @@ import Products from "./pages/shop-page/Products";
 import Product from "./pages/shop-page/Product";
 import Checkout from "./pages/shop-page/Checkout";
 import OrderSuccess from "./pages/shop-page/OrderSuccess";
+import Orders from "./pages/Orders";
+import OrderDetails from "./pages/OrderDetails";
 
 const router = createBrowserRouter([
   {
@@ -68,6 +70,14 @@ const router = createBrowserRouter([
       {
         path: "order-success",
         element: <OrderSuccess />,
+      },
+      {
+        path: "orders",
+        element: <Orders />,
+      },
+      {
+        path: "orders/:id",
+        element: <OrderDetails />,
       },
     ],
   },
