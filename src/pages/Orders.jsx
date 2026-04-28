@@ -90,6 +90,19 @@ function Orders() {
     error,
   } = useSelector((state) => state.order);
 
+  const orderStatusKey = useMemo(
+    () =>
+      Array.isArray(rawOrders)
+        ? rawOrders
+            .map(
+              (order) =>
+                `${getOrderId(order)}:${order?.orderStatus || order?.status || ""}`,
+            )
+            .join("|")
+        : "",
+    [rawOrders],
+  );
+
   const handleSingleOrderClick = (orderId) => {
     if (orderId && orderId !== "Unknown") {
       navigate(`/orders/${orderId}`);
@@ -98,7 +111,7 @@ function Orders() {
 
   useEffect(() => {
     dispatch(fetchOrders());
-  }, [dispatch]);
+  }, [dispatch, orderStatusKey]);
 
   const orders = useMemo(
     () => (Array.isArray(rawOrders) ? rawOrders : []),
@@ -183,11 +196,32 @@ function Orders() {
                     >
                       {paid ? "Paid" : "Unpaid"}
                     </span>
-                    <span
-                      className={`${styles.badge} ${delivered ? styles.badgeSuccess : styles.badgeDanger}`}
-                    >
-                      {delivered ? "Delivered" : "Pending"}
-                    </span>
+                    {(() => {
+                      const rawStatus =
+                        order?.orderStatus ||
+                        order?.status ||
+                        (delivered ? "delivered" : "pending");
+                      const statusText = String(rawStatus || "").replace(
+                        /^[a-z]/,
+                        (s) => s.toUpperCase(),
+                      );
+                      const statusLower = String(rawStatus || "").toLowerCase();
+                      const statusClass =
+                        statusLower === "delivered" ||
+                        statusLower === "shipped" ||
+                        statusLower === "paid"
+                          ? styles.badgeSuccess
+                          : statusLower === "cancelled" ||
+                              statusLower === "returned"
+                            ? styles.badgeDanger
+                            : styles.badgeWarning;
+
+                      return (
+                        <span className={`${styles.badge} ${statusClass}`}>
+                          {statusText}
+                        </span>
+                      );
+                    })()}
                     <button type="button" className={styles.detailsBtn}>
                       View Details
                     </button>

@@ -46,6 +46,10 @@ function Navbar() {
             Orders
           </NavLink>
 
+          <NavLink to="/admin/orders" className={linkClassName}>
+            Admin Orders
+          </NavLink>
+
           {!user && (
             <>
               <NavLink to="/login" className={linkClassName}>

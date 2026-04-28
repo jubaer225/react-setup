@@ -1,10 +1,11 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import {
   fetchOrderById,
   orderCancellation,
 } from "../features/order/order-slice";
+import ReviewModal from "../components/ReviewModal";
 import { buildProductImageUrl } from "../utils/imageUtils";
 import styles from "./OrderDetails.module.scss";
 
@@ -29,6 +30,12 @@ const getOrderDate = (order) =>
 
 const getTotalPrice = (order) =>
   Number(order?.totalPrice ?? order?.total ?? order?.amount ?? 0);
+
+const getOrderStatus = (order) =>
+  String(order?.orderStatus || order?.status || "pending").toLowerCase();
+
+const formatStatusLabel = (value) =>
+  String(value || "").replace(/^./, (character) => character.toUpperCase());
 
 const getOrderItems = (order) =>
   Array.isArray(order?.orderItems)
@@ -71,6 +78,18 @@ const getItemName = (item) =>
 const getItemQty = (item) => Number(item?.quantity || 0);
 
 const getItemPrice = (item) => Number(item?.price ?? item?.product?.price ?? 0);
+
+const getProductId = (item) =>
+  item?.product?._id || item?.product?.id || item?.productId || "";
+
+const isItemReviewed = (item) =>
+  Boolean(
+    item?.isReviewed ||
+    item?.reviewed ||
+    item?.hasReviewed ||
+    item?.product?.isReviewed ||
+    item?.product?.reviewedByCurrentUser,
+  );
 
 const getItemImage = (item) => {
   const product = item?.product || {};
@@ -159,6 +178,12 @@ function OrderDetails() {
   const { id } = useParams();
   const dispatch = useDispatch();
   const { orders, loading, error } = useSelector((state) => state.order);
+  const { reviews } = useSelector((state) => state.review);
+
+  const [reviewProductId, setReviewProductId] = useState("");
+  const [reviewProductName, setReviewProductName] = useState("");
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewedProductIds, setReviewedProductIds] = useState([]);
 
   const order = useMemo(() => {
     const list = Array.isArray(orders) ? orders : [];
@@ -185,6 +210,13 @@ function OrderDetails() {
   const orderDate = getOrderDate(order);
   const orderId = getOrderId(order);
   const totalPrice = getTotalPrice(order);
+  const currentStatus = getOrderStatus(order);
+  const currentStatusLabel = formatStatusLabel(currentStatus);
+  const orderStatusHint = isCanceled(order)
+    ? "Order already canceled"
+    : currentStatus === "shipped" || currentStatus === "delivered"
+      ? `Already ${currentStatusLabel.toLowerCase()} order`
+      : `Current order status: ${currentStatusLabel}`;
   const paymentMethod = order?.paymentMethod || "Not specified";
   const paymentStatus =
     typeof order?.isPaid === "boolean"
@@ -197,9 +229,42 @@ function OrderDetails() {
           : "Not Paid"
         : null;
   const canceled = isCanceled(order);
+  const canBeCanceled =
+    !canceled && currentStatus !== "shipped" && currentStatus !== "delivered";
+  const canWriteReview = currentStatus === "delivered";
+
+  const normalizedReviewedIds = useMemo(
+    () =>
+      (Array.isArray(reviews) ? reviews : [])
+        .map(
+          (entry) =>
+            entry?.productId || entry?.product?._id || entry?.product?.id || "",
+        )
+        .filter(Boolean),
+    [reviews],
+  );
+
+  const closeReviewModal = () => {
+    setIsReviewModalOpen(false);
+    setReviewProductId("");
+    setReviewProductName("");
+  };
+
+  const openReviewModal = (productId, productName) => {
+    setReviewProductId(productId);
+    setReviewProductName(productName || "");
+    setIsReviewModalOpen(true);
+  };
+
+  const handleReviewSuccess = (productId) => {
+    if (!productId) return;
+    setReviewedProductIds((previous) =>
+      previous.includes(productId) ? previous : [...previous, productId],
+    );
+  };
 
   const handleCancelOrder = async () => {
-    if (!id || canceled) return;
+    if (!id || !canBeCanceled) return;
 
     const confirmed = window.confirm(
       "Are you sure you want to cancel this order?",
@@ -224,19 +289,31 @@ function OrderDetails() {
           </div>
 
           {!loading && order && (
-            <button
-              type="button"
-              className={styles.cancelButton}
-              onClick={handleCancelOrder}
-              disabled={loading || canceled}
-              aria-disabled={loading || canceled}
-            >
-              {canceled
-                ? "Order Canceled"
-                : loading
-                  ? "Canceling..."
-                  : "Cancel Order"}
-            </button>
+            <div className={styles.orderActions}>
+              <span
+                className={`${styles.statusBadge} ${
+                  styles[`status_${currentStatus}`] || ""
+                }`}
+                title={`Order status: ${currentStatusLabel}`}
+              >
+                {currentStatusLabel}
+              </span>
+
+              <button
+                type="button"
+                className={styles.cancelButton}
+                onClick={handleCancelOrder}
+                disabled={loading || !canBeCanceled}
+                aria-disabled={loading || !canBeCanceled}
+                title={orderStatusHint}
+              >
+                {canceled
+                  ? "Order Canceled"
+                  : loading
+                    ? "Canceling..."
+                    : "Cancel Order"}
+              </button>
+            </div>
           )}
         </header>
 
@@ -337,6 +414,11 @@ function OrderDetails() {
                   const name = getItemName(item);
                   const quantity = getItemQty(item);
                   const price = getItemPrice(item);
+                  const productId = getProductId(item);
+                  const reviewed =
+                    isItemReviewed(item) ||
+                    reviewedProductIds.includes(productId) ||
+                    normalizedReviewedIds.includes(productId);
 
                   return (
                     <li key={`${name}-${index}`} className={styles.itemRow}>
@@ -351,6 +433,25 @@ function OrderDetails() {
                       <div className={styles.itemMain}>
                         <p className={styles.itemName}>{name}</p>
                         <p className={styles.itemMeta}>Qty: {quantity}</p>
+
+                        {canWriteReview && (
+                          <button
+                            type="button"
+                            className={styles.reviewButton}
+                            onClick={() => openReviewModal(productId, name)}
+                            disabled={!productId || reviewed}
+                            aria-disabled={!productId || reviewed}
+                            title={
+                              reviewed
+                                ? "Reviewed"
+                                : !productId
+                                  ? "Product not available for review"
+                                  : "Write Review"
+                            }
+                          >
+                            {reviewed ? "Reviewed" : "Write Review"}
+                          </button>
+                        )}
                       </div>
 
                       <p className={styles.itemPrice}>
@@ -364,6 +465,15 @@ function OrderDetails() {
                 })}
               </ul>
             </section>
+
+            <ReviewModal
+              isOpen={isReviewModalOpen}
+              productId={reviewProductId}
+              productName={reviewProductName}
+              orderId={orderId}
+              onClose={closeReviewModal}
+              onSuccess={handleReviewSuccess}
+            />
           </>
         )}
       </div>

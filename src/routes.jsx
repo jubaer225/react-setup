@@ -16,6 +16,8 @@ import Checkout from "./pages/shop-page/Checkout";
 import OrderSuccess from "./pages/shop-page/OrderSuccess";
 import Orders from "./pages/Orders";
 import OrderDetails from "./pages/OrderDetails";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminOrderDetails from "./pages/admin/AdminOrderDetails";
 
 const router = createBrowserRouter([
   {
@@ -78,6 +80,20 @@ const router = createBrowserRouter([
       {
         path: "orders/:id",
         element: <OrderDetails />,
+      },
+    ],
+  },
+  {
+    path: "/admin",
+    element: <AppLayout />,
+    children: [
+      {
+        path: "orders",
+        element: <AdminOrders />,
+      },
+      {
+        path: "orders/:id",
+        element: <AdminOrderDetails />,
       },
     ],
   },
